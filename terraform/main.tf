@@ -3,8 +3,8 @@ resource "aws_vpc" "main" {
 }
 
 resource "aws_subnet" "public" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.1.0/24"
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
 }
 
@@ -40,14 +40,19 @@ resource "aws_security_group" "web" {
   }
 }
 
+resource "aws_key_pair" "ssh_key" {
+  key_name   = var.key_name
+  public_key = file(var.public_key_path)
+}
+
 resource "aws_instance" "web" {
   ami           = "ami-0c02fb55956c7d316"
   instance_type = "t2.micro"
   subnet_id     = aws_subnet.public.id
   security_groups = [aws_security_group.web.id]
-  key_name      = var.key_name
+  key_name      = aws_key_pair.ssh_key.key_name
 
   tags = {
-    Name = "web-server"
+    Name = "docker-web-server"
   }
 }
