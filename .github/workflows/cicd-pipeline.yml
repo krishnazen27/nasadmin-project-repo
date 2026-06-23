@@ -67,5 +67,5 @@ jobs:
     # -----------------------------
     # Run Ansible Playbook
     # -----------------------------
-    - name: Run Ansible Playbook
-      working-directory: ansible
+    #- name: Run Ansible Playbook
+    #  working-directory: ansible
