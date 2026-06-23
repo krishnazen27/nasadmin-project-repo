@@ -40,14 +40,22 @@ resource "aws_security_group" "web" {
   }
 }
 
-resource "aws_key_pair" "ssh_key" {
-  key_name   = var.key_name
-  public_key = file(var.public_key_path)
+
+resource "tls_private_key" "ssh" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
 }
 
+resource "aws_key_pair" "ssh_key" {
+  key_name   = "terraform-generated-key"
+  public_key = tls_private_key.ssh.public_key_openssh
+}
+
+
+
 resource "aws_instance" "web" {
-  ami           = "ami-0c02fb55956c7d316"
-  instance_type = "t2.micro"
+  ami           = "ami-05cbf8a8aa4e4b755"
+  instance_type = "t3.micro"
   subnet_id     = aws_subnet.public.id
   security_groups = [aws_security_group.web.id]
   key_name      = aws_key_pair.ssh_key.key_name

@@ -1,0 +1,28 @@
+# Terraform state files
+*.tfstate
+*.tfstate.*
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Terraform local directories
+.terraform/
+.terraform.lock.hcl
+
+# Sensitive variable files
+terraform.tfvars
+*.tfvars
+
+# SSH keys (never commit these)
+ssh-key/
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+
+# Local override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
