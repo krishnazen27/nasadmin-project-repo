@@ -51,9 +51,8 @@ jobs:
       id: ec2ip
       working-directory: terraform
       run: |
-        IP=$(terraform output -json ec2_public_ip | jq -r '.')
-        echo "EC2_IP=$IP" >> $GITHUB_ENV
-
+       IP=$(terraform output -json ec2_public_ip | jq -r '.value')
+       echo "EC2_IP=$IP" >> $GITHUB_ENV
 
     - name: Show EC2 IP
       run: echo "EC2 instance public IP is $EC2_IP"
