@@ -40,31 +40,34 @@ resource "aws_security_group" "web" {
   }
 }
 
-
-resource "tls_private_key" "ssh" {
+resource "tls_private_key" "ssh_key" {
   algorithm = "RSA"
   rsa_bits  = 4096
 }
 
-resource "aws_key_pair" "ssh_key" {
-  key_name   = "terraform-generated-key"
-  public_key = tls_private_key.ssh.public_key_openssh
-
-    lifecycle {
-    create_before_destroy = true
-  }
+resource "aws_key_pair" "generated_key" {
+  key_name   = "krishna-ec2-key"
+  public_key = tls_private_key.ssh_key.public_key_openssh
 }
 
+resource "aws_s3_object" "ssh_private_key" {
+  bucket = "skr-backend-terraform-state-bucket"   # replace with your bucket name
+  key    = "keys/krishna-ec2-key.pem"
+  content = tls_private_key.ssh_key.private_key_pem
 
+  server_side_encryption = "AES256"
+}
 
 resource "aws_instance" "web" {
-  ami           = "ami-05cbf8a8aa4e4b755"
-  instance_type = "t3.micro"
-  subnet_id     = aws_subnet.public.id
-  security_groups = [aws_security_group.web.id]
-  key_name      = aws_key_pair.ssh_key.key_name
+  ami                    = "ami-05cbf8a8aa4e4b755"
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.web.id]
+
+  key_name = aws_key_pair.generated_key.key_name
 
   tags = {
     Name = "docker-web-server"
   }
 }
+
