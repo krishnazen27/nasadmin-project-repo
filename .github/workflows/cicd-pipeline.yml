@@ -39,16 +39,18 @@ jobs:
     # -----------------------------
     # Capture EC2 Public IP
     # -----------------------------
-
     - name: Get EC2 Public IP
       id: ec2ip
       working-directory: terraform
+      env:
+       TF_LOG: ""
       run: |
         IP=$(terraform output -raw ec2_public_ip)
         echo "EC2_IP=$IP" >> $GITHUB_ENV
 
     - name: Show EC2 IP
       run: echo "EC2 instance public IP is $EC2_IP"
+
 
     # -----------------------------
     # Install Ansible
