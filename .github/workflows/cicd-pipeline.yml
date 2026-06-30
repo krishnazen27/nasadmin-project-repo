@@ -34,7 +34,7 @@ jobs:
 
     - name: Terraform Apply
       working-directory: terraform
-      run: terraform apply -auto-approve
+      run: terraform destroy -auto-approve
 
     - name: Save Private Key
       working-directory: terraform
