@@ -34,24 +34,17 @@ jobs:
 
     - name: Terraform Apply
       working-directory: terraform
-      run: terraform destroy -auto-approve
-
-    - name: Save Private Key
-      working-directory: terraform
-      run: |
-        echo "${{ steps.tf.outputs.private_key }}" > id_rsa
-        chmod 600 id_rsa
-
+      run: terraform apply -auto-approve
 
     # -----------------------------
     # Capture EC2 Public IP
     # -----------------------------
-#    - name: Get EC2 Public IP
-#      id: ec2ip
-#      working-directory: terraform
-#      run: |
-#        IP=$(terraform output -raw ec2_public_ip)
-#        echo "EC2_IP=$IP" >> $GITHUB_ENV 
+    - name: Get EC2 Public IP
+      id: ec2ip
+      working-directory: terraform
+      run: |
+        IP=$(terraform output -raw ec2_public_ip)
+        echo "EC2_IP=$IP" >> $GITHUB_ENV 
 
     - name: Get EC2 Public IP
       id: ec2ip
