@@ -9,12 +9,12 @@ terraform {
 
 terraform {
   backend "s3" {
-    bucket = "skr-backend-terraform-state-bucket"
+    bucket = "kar-backend-terraform-state-bucket"
     key    = "terraform/state/terraform.tfstate"
     region = "eu-west-1"
     encrypt = true
   }
-}
+} 
 
 
 provider "aws" {

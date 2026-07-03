@@ -1,5 +1,8 @@
 resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
+  tags = {
+    Name = "project-vpc"
+  }
 }
 
 resource "aws_subnet" "public" {
@@ -51,7 +54,7 @@ resource "aws_key_pair" "generated_key" {
 }
 
 resource "aws_s3_object" "ssh_private_key" {
-  bucket = "skr-backend-terraform-state-bucket"   # replace with your bucket name
+  bucket = "kar-backend-terraform-state-bucket"   # replace with your bucket name
   key    = "keys/krishna-ec2-key.pem"
   content = tls_private_key.ssh_key.private_key_pem
 

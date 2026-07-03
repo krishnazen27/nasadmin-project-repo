@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "tf_state_bucket" {
-  bucket = "skr-backend-terraform-state-bucket"
+  bucket = "kar-backend-terraform-state-bucket"
 }
 
 resource "aws_s3_bucket_versioning" "versioning" {
