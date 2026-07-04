@@ -35,24 +35,9 @@ jobs:
     - name: Terraform Apply
       working-directory: terraform
       run: terraform apply -auto-approve
-
-    - name: Wait for EC2 to accept SSH
-      run: |
-       IP=$(terraform -chdir=terraform output -raw ec2_public_ip)
-
-       echo "Waiting for SSH on $IP..."
-
-       until ssh \
-        -o StrictHostKeyChecking=no \
-        -o ConnectTimeout=5 \
-        -i terraform/id_rsa.pem \
-        ec2-user@$IP "echo SSH is ready" >/dev/null 2>&1
-       do
-        echo "SSH not ready yet..."
-        sleep 10
-       done
-
-       echo "EC2 is ready."
+    
+    - name: Wait for EC2 initialization
+      run: sleep 20
 
     # -----------------------------
     # Install AWS CLI
