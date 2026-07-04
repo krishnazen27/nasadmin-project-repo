@@ -96,6 +96,8 @@
     source: build
     build:
       path: /home/ec2-user/webapp
+      arg:
+        APP_VERSION: "{{ app_version }}"
   when: code_changed
 
 # ---------------------------------------------------------
