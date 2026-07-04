@@ -30,7 +30,7 @@
 # 4. Generate NEW checksum
 # ---------------------------------------------------------
 
-- name: Generate NEW checksum of Dockerfile + app.py
+- name: Generate NEW checksum of webapp folder
   command: bash -c "tar cf - /home/ec2-user/webapp | sha256sum"
   register: new_checksum
 
@@ -94,8 +94,10 @@
   docker_image:
     name: mywebapp
     source: build
+    force_source: true
     build:
       path: /home/ec2-user/webapp
+      nocache: true
       args:
         APP_VERSION: "{{ app_version }}"
   when: code_changed
