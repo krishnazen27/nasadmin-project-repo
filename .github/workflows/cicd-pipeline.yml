@@ -39,21 +39,17 @@ jobs:
     - name: Terraform Apply
       working-directory: terraform
       run: terraform output ec2_public_ip
+
     # -----------------------------
-    # Capture EC2 Public IP
+    # Install AWS CLI
     # -----------------------------
-
-    - name: Get EC2 Public IP
-      id: ec2ip
-      working-directory: terraform
-      run: |
-        EC2_IP=$(terraform output -raw ec2_public_ip | head -n 1)
-        echo "EC2_IP=$EC2_IP" >> $GITHUB_ENV
-
-
-    - name: Show EC2 IP
-      run: echo "EC2 instance public IP is $EC2_IP"
-
+    - name: Install AWS CLI
+      run: sudo apt-get update && sudo apt-get install -y awscli
+    # -----------------------------
+    # Download Key 
+    # -----------------------------
+    - name: Download private key from S3
+      run: aws s3 cp s3://kar-backend-terraform-state-bucket/keys/krishna-ec2-key.pem terraform/id_rsa && chmod 600 terraform/id_rsa
 
     # -----------------------------
     # Install Ansible
@@ -64,11 +60,14 @@ jobs:
     # -----------------------------
     # Prepare Ansible Inventory
     # -----------------------------
-    - name: Create Ansible Inventory File
-      working-directory: ansible
+    - name: Build inventory and run Ansible
       run: |
-        echo "[web]" > inventory.ini
-        echo "$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/id_rsa" >> inventory.ini
+          IP=$(terraform -chdir=terraform output -raw ec2_public_ip)
+          cat > ansible/inventory.ini <<EOF
+          [web]
+          $IP ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/id_rsa
+          EOF
+          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
 
     # -----------------------------
     # Run Ansible Playbook
