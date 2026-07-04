@@ -1,30 +1,47 @@
-- name: Install dependencies
-  apt:
-    name: ["apt-transport-https", "ca-certificates", "curl", "software-properties-common"]
-    state: present
-    update_cache: yes
+---
+- name: Check if Docker is installed
+  command: docker --version
+  register: docker_check
+  ignore_errors: yes
 
-- name: Install Docker
-  apt:
-    name: docker.io
+- name: Install dependencies (only if Docker is missing)
+  yum:
+    name: yum-utils
     state: present
+  when: docker_check.failed
 
-- name: Start Docker
+- name: Install Docker (only if missing)
+  yum:
+    name: docker
+    state: present
+  when: docker_check.failed
+
+- name: Start & enable Docker service
   service:
     name: docker
     state: started
     enabled: yes
 
-- name: Copy web application files
+- name: Copy webapp folder (Dockerfile + app.py) to EC2
   copy:
     src: webapp/
-    dest: /home/ubuntu/webapp/
-    owner: ubuntu
-    group: ubuntu
-    mode: 0755
+    dest: /home/ec2-user/webapp/
+    mode: '0755'
 
-- name: Build Docker image
-  command: docker build -t webapp /home/ubuntu/webapp
+- name: Build Docker image from Dockerfile
+  command: docker build -t mywebapp:latest /home/ec2-user/webapp/
 
-- name: Run container
-  command: docker run -d -p 80:80 webapp
+- name: Stop old container if running
+  docker_container:
+    name: webapp
+    state: absent
+  ignore_errors: yes
+
+- name: Run web application container
+  docker_container:
+    name: webapp
+    image: mywebapp:latest
+    state: started
+    restart_policy: always
+    published_ports:
+      - "80:80"
