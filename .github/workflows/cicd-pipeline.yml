@@ -2,7 +2,12 @@ name: Terraform + Ansible Deployment
 
 on:
   push:
-    branches: [ "development" ]
+    branches:
+      - development
+    paths:
+      - 'terraform/**'
+      - 'ansible/**'
+      - '.github/workflows/**'
 
 jobs:
   deploy:
