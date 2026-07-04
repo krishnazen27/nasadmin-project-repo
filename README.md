@@ -1,211 +1,256 @@
-# nasadmin-project-repo
-Network and Systems Administration subject project 
+# NAS Admin Project Repository
 
-🚀 AWS + Terraform + Ansible + Docker Deployment Pipeline
-Automated EC2 provisioning and Docker‑based application deployment using Terraform, Ansible, and GitHub Actions.
+## Overview
 
-This project delivers a fully automated CI/CD pipeline that:
+This repository demonstrates an end-to-end AWS infrastructure and deployment pipeline using:
+- Terraform for AWS provisioning
+- Ansible for EC2 configuration and Docker deployment
+- Docker for containerizing the web application
+- GitHub Actions for CI/CD orchestration
 
-Provisions an EC2 instance using Terraform
+The pipeline provisions an EC2 instance, retrieves the SSH key from an S3 bucket, connects to the instance over SSH, installs Docker, builds the app image, and deploys the web application container.
 
-Copies the application (webapp/) from GitHub runner to EC2
+## Project Structure
 
-Installs Docker on EC2
-
-Builds a Docker image from the copied code
-
-Stops any existing container
-
-Deploys a fresh container with the updated application
-
-📦 Project Structure
-Code
-project-root/
-│
+```
+nasadmin-project-repo/
+├── .github/
+│   └── workflows/cicd-pipeline.yml
+├── ansible/
+│   ├── playbook.yml
+│   ├── inventory.ini
+│   └── roles/docker/tasks/main.yml
 ├── terraform/
 │   ├── main.tf
 │   ├── outputs.tf
+│   ├── provider.tf
 │   ├── variables.tf
-│   ├── inventory.ini
-│   └── id_rsa.pem (downloaded from S3 during workflow)
-│
-├── ansible/
-│   ├── playbook.yml
-│   └── roles/
-│       └── docker/
-│           └── tasks/
-│               └── main.yml
-│
-├── webapp/
-│   ├── Dockerfile
-│   └── app.py
-│
-└── .github/workflows/deploy.yml
-🧩 Components Explained
-1. Terraform
-Terraform provisions the AWS infrastructure:
+│   ├── terraform.tfvars
+│   └── ssh-key/
+└── webapp/
+    ├── app.py
+    └── Dockerfile
+```
 
-EC2 instance
+## Architecture Diagram
 
-Security groups
+### AWS Infrastructure Architecture
 
-SSH access
+The following diagram shows how GitHub Actions triggers Terraform, provisions AWS infrastructure, stores the SSH private key in S3, and deploys the Docker application to EC2.
 
-Outputs the EC2 public IP
+```mermaid
+flowchart LR
+    A[GitHub Actions] -->|terraform apply| B[AWS VPC]
+    B --> C[Public Subnet]
+    C --> D[Security Group: SSH 22, HTTP 80, HTTPS 443]
+    C --> E[EC2 Instance]
+    E -->|Docker deployed| F[Web Application Container]
+    A -->|download key| G[S3 Bucket]
+    G -->|SSH private key| E
+    E -->|public IP| H[User Browser]
+```
 
-Generates an Ansible inventory file dynamically
+### CI/CD Pipeline Flow
 
-Terraform ensures your infrastructure is consistent, repeatable, and version‑controlled.
+The pipeline flow below describes the exact steps executed by the GitHub Actions workflow.
 
-2. GitHub Actions
-GitHub Actions acts as the CI/CD orchestrator:
+```mermaid
+flowchart TD
+    A[Code push to development branch] --> B[GitHub Actions CI/CD job]
+    B --> C[Checkout repository]
+    C --> D[Configure AWS credentials]
+    D --> E[Terraform init & apply]
+    E --> F[EC2 created + public IP output]
+    F --> G[Download SSH key from S3]
+    G --> H[Generate Ansible inventory]
+    H --> I[Run Ansible playbook]
+    I --> J[Install Docker on EC2]
+    J --> K[Build and run Docker container]
+    K --> L[App available on EC2 public IP:80]
+```
 
-Runs on every push to the development branch
+## Example Values
 
-Authenticates with AWS
+Use these sample values when configuring or validating the pipeline.
 
-Executes Terraform
+- AWS region: `us-east-1`
+- Terraform state bucket: `kar-backend-terraform-state-bucket`
+- SSH private key S3 object: `keys/krishna-ec2-key.pem`
+- Local downloaded key path: `terraform/id_rsa`
+- Ansible host user: `ubuntu`
+- EC2 security group ports: `22` for SSH and `80` for HTTP
+- Web application access URL: `http://<EC2_PUBLIC_IP>/`
 
-Downloads EC2 SSH key from S3
+### Example Terraform Output
 
-Installs Ansible + Docker collection
+```bash
+terraform -chdir=terraform output -raw ec2_public_ip
+# 18.203.45.171
+```
 
-Runs Ansible playbook against the newly created EC2 instance
+### Example Ansible Inventory Entry
 
-This creates a fully automated deployment pipeline.
+```ini
+[web]
+18.203.45.171 ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/id_rsa
+```
 
-3. Ansible
-Ansible handles configuration and deployment on EC2:
+### Example GitHub Actions Workflow Step
 
-Copies the webapp/ folder to EC2
+```yaml
+- name: Download private key from S3
+  run: aws s3 cp s3://kar-backend-terraform-state-bucket/keys/krishna-ec2-key.pem terraform/id_rsa && chmod 600 terraform/id_rsa
+```
 
-Installs Docker
+## What the Pipeline Does
 
-Builds Docker image
+1. **Terraform** provisions AWS resources:
+   - VPC and public subnet
+   - Security group allowing SSH and HTTP
+   - EC2 instance with a generated key pair
+   - S3 object that stores the private SSH key
+   - Outputs the EC2 public IP
 
-Stops old container
+2. **GitHub Actions** runs after pushes to the `development` branch:
+   - sets AWS credentials
+   - runs `terraform apply`
+   - downloads the SSH private key from S3
+   - installs Ansible dependencies
+   - runs the Ansible playbook against the EC2 host
 
-Deploys new container
+3. **Ansible** configures the EC2 host:
+   - installs Docker
+   - copies the `webapp/` code to the EC2 instance
+   - builds a Docker image from `Dockerfile`
+   - starts a container exposing port `80`
 
-Ansible ensures deployments are idempotent, predictable, and safe.
+4. **Docker** runs the web application in a container, making it available through the EC2 public IP.
 
-4. Docker
-Docker runs your application inside a container:
+## Detailed Component Explanation
 
-Image built from webapp/Dockerfile
+### Terraform
 
-Container named webapp
+Relevant files:
+- `terraform/main.tf`
+- `terraform/outputs.tf`
+- `terraform/provider.tf`
+- `terraform/variables.tf`
 
-Exposes port 80
+Key behavior:
+- Creates an AWS VPC and subnet
+- Declares a security group for SSH and web traffic
+- Generates an RSA key pair (`tls_private_key` and `aws_key_pair`)
+- Uploads the private key PEM to S3
+- Creates EC2 instances using the generated key
+- Exposes `ec2_public_ip` output to connect with Ansible
 
-This makes your application portable and easy to update.
+### Ansible
 
-🔄 End‑to‑End Execution Flow
-Step 1 — Developer pushes code
-Push to the development branch triggers GitHub Actions.
+Relevant files:
+- `ansible/playbook.yml`
+- `ansible/inventory.ini`
+- `ansible/roles/docker/tasks/main.yml`
 
-Step 2 — GitHub Actions starts
-Checks out repository
+Key tasks:
+- install dependencies for Docker
+- install and start the Docker service
+- copy the web application files to `/home/ubuntu/webapp/`
+- build a Docker image named `webapp`
+- run a container bound to host port `80`
 
-Configures AWS credentials
+### Docker Application
 
-Runs Terraform to create EC2
+Relevant files:
+- `webapp/Dockerfile`
+- `webapp/app.py`
 
-Retrieves EC2 public IP
+The application is built into a Docker image and executed as a container on the EC2 instance. The container listens on port `80` so incoming HTTP traffic to the EC2 public IP is served by the app.
 
-Downloads SSH key from S3
+## Execution and Deployment
 
-Installs Ansible + Docker collection
+### Prerequisites
 
-Step 3 — Ansible connects to EC2
-Using:
+- AWS account with credentials in GitHub Secrets:
+  - `AWS_ACCESS_KEY_ID`
+  - `AWS_SECRET_ACCESS_KEY`
+- Terraform installed
+- Ansible installed (GitHub Actions installs via pip)
+- AWS CLI installed in the runner
+- Proper IAM permissions for Terraform and S3 access
 
-terraform/inventory.ini
+### Manual Local Execution
 
-terraform/id_rsa.pem
+1. Initialize and apply Terraform:
 
-Step 4 — Ansible Docker role executes
-Copies webapp/ to EC2
-
-Installs Docker
-
-Builds Docker image
-
-Stops old container
-
-Deploys new container
-
-Step 5 — Application is live
-Your updated app is now running inside a Docker container on EC2.
-
-🛠 Key Logic in Deployment
-Copy → Build → Deploy
-1. Copy webapp folder
-From GitHub runner → EC2:
-
-yaml
-copy:
-  src: webapp/
-  dest: /home/ec2-user/webapp/
-2. Install Docker
-Ensures Docker is available:
-
-yaml
-yum:
-  name: docker
-  state: present
-3. Build Docker image
-Builds image from Dockerfile:
-
-yaml
-community.docker.docker_image:
-  name: mywebapp
-  build:
-    path: /home/ec2-user/webapp
-4. Stop old container
-Safe replacement:
-
-yaml
-community.docker.docker_container:
-  name: webapp
-  state: stopped
-5. Deploy new container
-Runs updated app:
-
-yaml
-community.docker.docker_container:
-  name: webapp
-  image: mywebapp:latest
-  state: started
-  published_ports:
-    - "80:80"
-▶️ How to Run Locally (Optional)
-1. Provision EC2
-bash
+```bash
 cd terraform
 terraform init
 terraform apply -auto-approve
-2. Deploy using Ansible
-bash
-ansible-playbook -i terraform/inventory.ini ansible/playbook.yml
-🌐 Deployment Output
-After the pipeline completes:
+```
 
-EC2 instance is created
+2. Download the SSH private key from the S3 bucket:
 
-Docker is installed
+```bash
+aws s3 cp s3://kar-backend-terraform-state-bucket/keys/krishna-ec2-key.pem terraform/id_rsa
+chmod 600 terraform/id_rsa
+```
 
-Image is built
+3. Create an Ansible inventory file:
 
-Container is deployed
+```bash
+IP=$(terraform -chdir=terraform output -raw ec2_public_ip)
+cat > ansible/inventory.ini <<EOF
+[web]
+$IP ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/id_rsa
+EOF
+```
 
-Application is accessible via EC2 public IP on port 80
+4. Run the Ansible playbook:
 
-🧭 Summary
-This project provides a complete automated deployment pipeline:
+```bash
+ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+```
 
-Component	Responsibility
-Terraform	Provision EC2 + networking
-GitHub Actions	CI/CD automation
-Ansible	Configure EC2 + deploy app
-Docker	Run application in container
+### GitHub Actions Execution
+
+The CI/CD pipeline is defined in `.github/workflows/cicd-pipeline.yml` and runs on pushes to `development`.
+
+The workflow:
+- checks out the repository
+- configures AWS credentials
+- runs `terraform init` and `terraform apply`
+- waits for EC2 initialization
+- downloads the EC2 SSH key from S3
+- installs Ansible
+- runs the Ansible playbook against the EC2 host
+
+## Notes and Best Practices
+
+- The pipeline expects the SSH key object to exist in the configured S3 bucket after Terraform execution.
+- The EC2 instance uses `ubuntu` as the SSH user; if the AMI differs, update the Ansible inventory user.
+- The security group allows SSH and HTTP traffic; verify this before deployment.
+- If the container fails to start, log in to EC2 and inspect the Docker container status.
+
+## Troubleshooting
+
+- If Ansible cannot connect:
+  - verify `terraform/id_rsa` exists and has correct permissions
+  - verify the public IP matches the EC2 instance
+  - verify S3 permissions allow `GetObject`
+
+- If Docker fails on EC2:
+  - verify Docker service is running
+  - verify `webapp/` files were copied correctly
+  - inspect logs with `docker ps` and `docker logs <container>`
+
+## What to Expect After Deployment
+
+- A public EC2 instance running the web app in Docker
+- The app accessible from the public IP over HTTP on port `80`
+- A GitHub Actions workflow execution correlating with your code push
+- Reproducible infrastructure changes through Terraform
+- Repeatable configuration and deployment through Ansible
+
+---
+
+For changes, update the Terraform or Ansible configuration, then commit to the `development` branch to trigger the CI/CD pipeline.
