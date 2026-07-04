@@ -31,7 +31,7 @@
 # ---------------------------------------------------------
 
 - name: Generate NEW checksum of Dockerfile + app.py
-  command: bash -c "cat /home/ec2-user/webapp/Dockerfile /home/ec2-user/webapp/app.py | sha256sum"
+  command: bash -c "tar cf - /home/ec2-user/webapp | sha256sum"
   register: new_checksum
 
 - name: Save NEW checksum to webapp.checksum
