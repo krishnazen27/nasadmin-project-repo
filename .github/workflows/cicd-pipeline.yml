@@ -70,7 +70,13 @@ jobs:
           [web]
           $IP ansible_user=ubuntu ansible_ssh_private_key_file=../terraform/id_rsa
           EOF
-          ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+    - name: Debug Inventory
+      run: cat terraform/inventory.ini
+
+    - name: Debug Inventory
+      run: cat ansible/inventory.ini
+
+#ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
 
     # -----------------------------
     # Run Ansible Playbook
