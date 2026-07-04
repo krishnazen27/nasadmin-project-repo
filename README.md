@@ -236,8 +236,9 @@ The workflow:
 - The EC2 instance uses `ec2-user` as the SSH user; if the AMI differs, update the Ansible inventory user.
 - The security group allows SSH and HTTP traffic; verify this before deployment.
 - If the container fails to start, log in to EC2 and inspect the Docker container status.
-- Secrets can be managed in a better way using the secrets IAM services in aws
-- Can modularise the terraform code for better reusablity if more number of services needed for project
+- Secrets can be managed in a better way using the secrets IAM services in aws.
+- Can modularise the terraform code for better reusablity if more number of services needed for project.
+- Can create custom Images for EC2 and runner node to reduce build time and stable/approved software versions.
 
 ## Troubleshooting
 
