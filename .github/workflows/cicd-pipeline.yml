@@ -74,7 +74,10 @@ jobs:
       run: chmod 600 terraform/id_rsa
 
     - name: Run Ansible Playbook
+      env:
+        ANSIBLE_HOST_KEY_CHECKING: "False"
       run: ansible-playbook -i terraform/inventory.ini ansible/playbook.yml
+
 #ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
 
     # -----------------------------
