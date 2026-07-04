@@ -98,7 +98,23 @@
   when: code_changed
 
 # ---------------------------------------------------------
-# 10. Deploy container only when image changed
+# 10. Stop old container BEFORE creating new one
+# ---------------------------------------------------------
+
+- name: Check if old container exists
+  community.docker.docker_container_info:
+    name: webapp
+  register: container_info
+  when: code_changed
+
+- name: Stop old container if running
+  community.docker.docker_container:
+    name: webapp
+    state: stopped
+  when: code_changed and container_info.exists
+
+# ---------------------------------------------------------
+# 11. Deploy new container only when image changed
 # ---------------------------------------------------------
 
 - name: Deploy new container only when code changed
