@@ -3,6 +3,6 @@ app = Flask(__name__)
 
 @app.route("/")
 def home():
-    return "Hello from Docker on AWS EC2! after changes made"
+    return "Hello from Docker on AWS EC2! Demo app"
 
 app.run(host="0.0.0.0", port=80)
