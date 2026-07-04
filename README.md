@@ -1,11 +1,11 @@
-# NAS Admin Project Repository
+# NETWORKS AND SYSTEMS ADMINISTRATION Project Repository
 
 ## Overview
 
 This repository demonstrates an end-to-end AWS infrastructure and deployment pipeline using:
-- Terraform for AWS provisioning
+- Terraform for AWS resources provisioning
 - Ansible for EC2 configuration and Docker deployment
-- Docker for containerizing the web application
+- Ansible for Docker containerizing the web application
 - GitHub Actions for CI/CD orchestration
 
 The pipeline provisions an EC2 instance, retrieves the SSH key from an S3 bucket, connects to the instance over SSH, installs Docker, builds the app image, and deploys the web application container.
@@ -49,6 +49,7 @@ flowchart LR
     G -->|SSH private key| E
     E -->|public IP| H[User Browser]
 ```
+![AWS Infrastructure Architecture Diagram](images/AWS-Resources.png)
 
 ### CI/CD Pipeline Flow
 
@@ -68,6 +69,7 @@ flowchart TD
     J --> K[Build and run Docker container]
     K --> L[App available on EC2 public IP:80]
 ```
+![CI/CD Pipeline Flow Architecture Diagram](images/CICD-Flow.png)
 
 ## Example Values
 
@@ -244,6 +246,8 @@ The workflow:
   - inspect logs with `docker ps` and `docker logs <container>`
 
 ## What to Expect After Deployment
+
+![End to End Architecture Diagram](images/End-2-End-Arch.png)
 
 - A public EC2 instance running the web app in Docker
 - The app accessible from the public IP over HTTP on port `80`
