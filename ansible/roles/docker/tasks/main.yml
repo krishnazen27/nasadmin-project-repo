@@ -1,6 +1,6 @@
 ---
 # ---------------------------------------------------------
-# 1. Copy webapp folder FIRST (Dockerfile + app.py)
+# 1. Copy webapp folder FIRST
 # ---------------------------------------------------------
 
 - name: Copy webapp folder to EC2
@@ -10,37 +10,54 @@
     mode: '0755'
 
 # ---------------------------------------------------------
-# 2. Calculate combined checksum of Dockerfile + app.py
-# ---------------------------------------------------------
-
-- name: Calculate combined checksum of Dockerfile + app.py
-  command: bash -c "cat /home/ec2-user/webapp/Dockerfile /home/ec2-user/webapp/app.py | sha256sum"
-  register: new_checksum
-
-# ---------------------------------------------------------
-# 3. Check if previous checksum exists
+# 2. Check if previous checksum exists
 # ---------------------------------------------------------
 
 - name: Check if previous checksum exists
   stat:
     path: /home/ec2-user/webapp.checksum
-  register: checksum_file
-
-- name: Load previous checksum
-  command: cat /home/ec2-user/webapp.checksum
-  register: old_checksum
-  when: checksum_file.stat.exists
+  register: prev_checksum_file
 
 # ---------------------------------------------------------
-# 4. Compare checksums
+# 3. If previous checksum exists, rename it
+# ---------------------------------------------------------
+
+- name: Rename previous checksum to old_webapp.checksum
+  command: mv /home/ec2-user/webapp.checksum /home/ec2-user/old_webapp.checksum
+  when: prev_checksum_file.stat.exists
+
+# ---------------------------------------------------------
+# 4. Generate NEW checksum
+# ---------------------------------------------------------
+
+- name: Generate NEW checksum of Dockerfile + app.py
+  command: bash -c "cat /home/ec2-user/webapp/Dockerfile /home/ec2-user/webapp/app.py | sha256sum"
+  register: new_checksum
+
+- name: Save NEW checksum to webapp.checksum
+  copy:
+    content: "{{ new_checksum.stdout.split()[0] }}"
+    dest: /home/ec2-user/webapp.checksum
+
+# ---------------------------------------------------------
+# 5. Load OLD checksum (only if it existed)
+# ---------------------------------------------------------
+
+- name: Load OLD checksum
+  command: cat /home/ec2-user/old_webapp.checksum
+  register: old_checksum
+  when: prev_checksum_file.stat.exists
+
+# ---------------------------------------------------------
+# 6. Compare NEW checksum vs OLD checksum
 # ---------------------------------------------------------
 
 - name: Determine if code changed
   set_fact:
-    code_changed: "{{ (not checksum_file.stat.exists) or (new_checksum.stdout.split()[0] != old_checksum.stdout.split()[0]) }}"
+    code_changed: "{{ (not prev_checksum_file.stat.exists) or (new_checksum.stdout.split()[0] != old_checksum.stdout.split()[0]) }}"
 
 # ---------------------------------------------------------
-# 5. Print no-change message
+# 7. If no change → skip deployment
 # ---------------------------------------------------------
 
 - name: Print no-change message
@@ -49,17 +66,7 @@
   when: not code_changed
 
 # ---------------------------------------------------------
-# 6. Save new checksum
-# ---------------------------------------------------------
-
-- name: Save new checksum
-  copy:
-    content: "{{ new_checksum.stdout.split()[0] }}"
-    dest: /home/ec2-user/webapp.checksum
-  when: code_changed
-
-# ---------------------------------------------------------
-# 7. Install Docker (idempotent)
+# 8. Install Docker (idempotent)
 # ---------------------------------------------------------
 
 - name: Check if Docker is installed
@@ -80,22 +87,22 @@
     enabled: yes
 
 # ---------------------------------------------------------
-# 8. Build Docker image only when code changed
+# 9. Build Docker image only when code changed
 # ---------------------------------------------------------
 
 - name: Build Docker image only when code changed
-  docker_image:
+  community.docker.docker_image:
     name: mywebapp
     build:
       path: /home/ec2-user/webapp
   when: code_changed
 
 # ---------------------------------------------------------
-# 9. Deploy container only when image changed
+# 10. Deploy container only when image changed
 # ---------------------------------------------------------
 
 - name: Deploy new container only when code changed
-  docker_container:
+  community.docker.docker_container:
     name: webapp
     image: mywebapp:latest
     state: started
