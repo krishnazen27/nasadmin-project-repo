@@ -29,13 +29,13 @@
     mode: '0755'
 
 - name: Build Docker image only when Dockerfile or app changes
-  docker_image:
+  community.docker.docker_image:
     name: mywebapp
     build:
       path: /home/ec2-user/webapp
 
 - name: Run web application container only when image changes
-  docker_container:
+  community.docker.docker_container:
     name: webapp
     image: mywebapp:latest
     state: started
