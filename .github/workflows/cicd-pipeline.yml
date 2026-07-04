@@ -36,10 +36,6 @@ jobs:
       working-directory: terraform
       run: terraform apply -auto-approve
 
-    - name: Terraform Apply
-      working-directory: terraform
-      run: terraform output ec2_public_ip
-
     # -----------------------------
     # Install AWS CLI
     # -----------------------------
@@ -75,13 +71,6 @@ jobs:
     # -----------------------------
     # Prepare Ansible Inventory check
     # -----------------------------
-    - name: Debug Inventory
-      run: 
-        cat terraform/inventory.ini terraform/id_rsa.pem
-  
-    - name: Debug Inventory
-      run: cat ansible/inventory.ini
-
     - name: Show folder tree
       run: |
         sudo apt-get install -y tree
