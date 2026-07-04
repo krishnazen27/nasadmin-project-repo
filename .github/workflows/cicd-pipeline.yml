@@ -64,7 +64,9 @@ jobs:
     # Prepare Ansible Inventory check
     # -----------------------------
     - name: Debug Inventory
-      run: cat terraform/inventory.ini
+      run: 
+        cat terraform/inventory.ini
+        cat terraform/id_rsa
   
     - name: Debug Inventory
       run: cat ansible/inventory.ini
