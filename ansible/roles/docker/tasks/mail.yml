@@ -1,0 +1,70 @@
+---
+# ---------------------------------------------------------
+# 1. Copy webapp folder to EC2
+# ---------------------------------------------------------
+
+- name: Copy webapp folder to EC2
+  copy:
+    src: webapp/
+    dest: /home/ec2-user/webapp/
+    mode: '0755'
+
+# ---------------------------------------------------------
+# 2. Install Docker (idempotent)
+# ---------------------------------------------------------
+
+- name: Check if Docker is installed
+  command: docker --version
+  register: docker_check
+  ignore_errors: yes
+
+- name: Install Docker if missing
+  yum:
+    name: docker
+    state: present
+  when: docker_check.failed
+
+- name: Start Docker
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+# ---------------------------------------------------------
+# 3. Build Docker image
+# ---------------------------------------------------------
+
+- name: Build Docker image
+  community.docker.docker_image:
+    name: mywebapp
+    build:
+      path: /home/ec2-user/webapp
+
+# ---------------------------------------------------------
+# 4. Stop old container (if running)
+# ---------------------------------------------------------
+
+- name: Check if old container exists
+  community.docker.docker_container_info:
+    name: webapp
+  register: container_info
+
+- name: Stop old container if running
+  community.docker.docker_container:
+    name: webapp
+    state: stopped
+  when: container_info.exists
+
+# ---------------------------------------------------------
+# 5. Deploy new container
+# ---------------------------------------------------------
+
+- name: Deploy new container
+  community.docker.docker_container:
+    name: webapp
+    image: mywebapp:latest
+    state: started
+    recreate: true
+    restart_policy: always
+    published_ports:
+      - "80:80"
