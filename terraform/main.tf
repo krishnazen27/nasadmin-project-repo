@@ -5,11 +5,43 @@ resource "aws_vpc" "main" {
   }
 }
 
+resource "aws_internet_gateway" "igw" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "project-vpc-igw"
+  }
+}
+
+
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
+
+  tags = {
+    Name = "project-vpc-subnet-public"
+  }
 }
+
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.igw.id
+  }
+
+  tags = {
+    Name = "project-vpc-public-rt"
+  }
+}
+
+resource "aws_route_table_association" "public_assoc" {
+  subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
 
 resource "aws_security_group" "web" {
   vpc_id = aws_vpc.main.id
@@ -41,6 +73,10 @@ resource "aws_security_group" "web" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name = "project-vpc-sg-web"
+  }
 }
 
 resource "tls_private_key" "ssh_key" {
@@ -59,6 +95,7 @@ resource "aws_s3_object" "ssh_private_key" {
   content = tls_private_key.ssh_key.private_key_pem
 
   server_side_encryption = "AES256"
+
 }
 
 resource "aws_instance" "web" {
