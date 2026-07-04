@@ -76,4 +76,4 @@ jobs:
     - name: Run Ansible Playbook
       env:
         ANSIBLE_HOST_KEY_CHECKING: "False"
-      run: ansible-playbook -i terraform/inventory.ini ansible/playbook.yml --extra-vars "app_version=${GITHUB_SHA::7}
+      run: ansible-playbook -i terraform/inventory.ini ansible/playbook.yml --extra-vars "app_version=${GITHUB_SHA::7}"
