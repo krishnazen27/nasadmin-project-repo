@@ -1,4 +1,44 @@
+---
 - hosts: web
   become: yes
-  roles:
-    - docker
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  tasks:
+
+    - name: Check if Docker is installed
+      command: docker --version
+      register: docker_check
+      ignore_errors: yes
+
+    - name: Install dependencies (only if Docker is missing)
+      yum:
+        name: yum-utils
+        state: present
+      when: docker_check.failed
+
+    - name: Install Docker (only if missing)
+      yum:
+        name: docker
+        state: present
+      when: docker_check.failed
+
+    - name: Start & enable Docker service
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Pull web application image
+      docker_image:
+        name: mywebapp:latest
+        source: pull
+
+    - name: Run web application container
+      docker_container:
+        name: webapp
+        image: mywebapp:latest
+        state: started
+        restart_policy: always
+        published_ports:
+          - "80:80"
