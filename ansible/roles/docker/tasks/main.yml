@@ -28,20 +28,18 @@
     dest: /home/ec2-user/webapp/
     mode: '0755'
 
-- name: Build Docker image from Dockerfile
-  command: docker build -t mywebapp:latest /home/ec2-user/webapp/
+- name: Build Docker image only when Dockerfile or app changes
+  docker_image:
+    name: mywebapp
+    build:
+      path: /home/ec2-user/webapp
 
-- name: Stop old container if running
-  docker_container:
-    name: webapp
-    state: absent
-  ignore_errors: yes
-
-- name: Run web application container
+- name: Run web application container only when image changes
   docker_container:
     name: webapp
     image: mywebapp:latest
     state: started
+    recreate: false
     restart_policy: always
     published_ports:
       - "80:80"
