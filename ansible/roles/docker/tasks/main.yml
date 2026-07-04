@@ -1,22 +1,25 @@
 ---
 # ---------------------------------------------------------
-# 1. Copy webapp folder FIRST
+# 1. Copy webapp folder FIRST (Dockerfile + app.py)
 # ---------------------------------------------------------
 
-- name: Copy webapp folder (Dockerfile + app.py) to EC2
+- name: Copy webapp folder to EC2
   copy:
     src: webapp/
     dest: /home/ec2-user/webapp/
     mode: '0755'
 
 # ---------------------------------------------------------
-# 2. Detect code changes using checksum
+# 2. Calculate combined checksum of Dockerfile + app.py
 # ---------------------------------------------------------
 
-- name: Calculate checksum of webapp folder
-  command: sha256sum /home/ec2-user/webapp/Dockerfile /home/ec2-user/webapp/app.py
+- name: Calculate combined checksum of Dockerfile + app.py
+  command: bash -c "cat /home/ec2-user/webapp/Dockerfile /home/ec2-user/webapp/app.py | sha256sum"
   register: new_checksum
-  ignore_errors: yes
+
+# ---------------------------------------------------------
+# 3. Check if previous checksum exists
+# ---------------------------------------------------------
 
 - name: Check if previous checksum exists
   stat:
@@ -27,25 +30,36 @@
   command: cat /home/ec2-user/webapp.checksum
   register: old_checksum
   when: checksum_file.stat.exists
-  ignore_errors: yes
+
+# ---------------------------------------------------------
+# 4. Compare checksums
+# ---------------------------------------------------------
 
 - name: Determine if code changed
   set_fact:
-    code_changed: "{{ (not checksum_file.stat.exists) or (new_checksum.stdout != old_checksum.stdout) }}"
+    code_changed: "{{ (not checksum_file.stat.exists) or (new_checksum.stdout.split()[0] != old_checksum.stdout.split()[0]) }}"
+
+# ---------------------------------------------------------
+# 5. Print no-change message
+# ---------------------------------------------------------
 
 - name: Print no-change message
   debug:
     msg: "No change in application code. Deployment skipped."
   when: not code_changed
 
+# ---------------------------------------------------------
+# 6. Save new checksum
+# ---------------------------------------------------------
+
 - name: Save new checksum
   copy:
-    content: "{{ new_checksum.stdout }}"
+    content: "{{ new_checksum.stdout.split()[0] }}"
     dest: /home/ec2-user/webapp.checksum
   when: code_changed
 
 # ---------------------------------------------------------
-# 3. Install Docker (idempotent)
+# 7. Install Docker (idempotent)
 # ---------------------------------------------------------
 
 - name: Check if Docker is installed
@@ -66,22 +80,22 @@
     enabled: yes
 
 # ---------------------------------------------------------
-# 4. Build Docker image only when code changed
+# 8. Build Docker image only when code changed
 # ---------------------------------------------------------
 
 - name: Build Docker image only when code changed
-  community.docker.docker_image:
+  docker_image:
     name: mywebapp
     build:
       path: /home/ec2-user/webapp
   when: code_changed
 
 # ---------------------------------------------------------
-# 5. Deploy container only when image changed
+# 9. Deploy container only when image changed
 # ---------------------------------------------------------
 
 - name: Deploy new container only when code changed
-  community.docker.docker_container:
+  docker_container:
     name: webapp
     image: mywebapp:latest
     state: started
