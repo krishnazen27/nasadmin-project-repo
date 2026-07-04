@@ -91,7 +91,7 @@
 # ---------------------------------------------------------
 
 - name: Build Docker image only when code changed
-  community.docker.docker_image:
+  docker_image:
     name: mywebapp
     source: build
     build:
@@ -103,13 +103,13 @@
 # ---------------------------------------------------------
 
 - name: Check if old container exists
-  community.docker.docker_container_info:
+  docker_container_info:
     name: webapp
   register: container_info
   when: code_changed
 
 - name: Stop old container if running
-  community.docker.docker_container:
+  docker_container:
     name: webapp
     state: stopped
   when: code_changed and container_info.exists
@@ -119,7 +119,7 @@
 # ---------------------------------------------------------
 
 - name: Deploy new container only when code changed
-  community.docker.docker_container:
+  docker_container:
     name: webapp
     image: mywebapp:latest
     state: started

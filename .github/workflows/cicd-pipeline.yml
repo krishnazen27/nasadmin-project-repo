@@ -60,14 +60,6 @@ jobs:
         sudo apt-get install -y python3-pip
         pip3 install ansible ansible-lint
 
-    - name: Install Ansible Docker collection
-      run: ansible-galaxy collection install community.docker --force
-
-    - name: Verify Ansible version and collections
-      run: |
-        ansible --version
-        ansible-galaxy collection list
-
     # -----------------------------
     # Prepare Ansible Inventory check
     # -----------------------------
