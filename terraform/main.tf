@@ -114,7 +114,7 @@ resource "aws_instance" "web" {
 resource "local_file" "ansible_inventory" {
   content = <<EOF
 [web]
-${aws_instance.web.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=../terraform/id_rsa
+${aws_instance.web.public_ip} ansible_user=ec2-user ansible_ssh_private_key_file=../terraform/id_rsa.pem
 EOF
 
   filename = "${path.module}/inventory.ini"

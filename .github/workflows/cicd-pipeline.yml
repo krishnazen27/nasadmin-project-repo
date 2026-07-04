@@ -52,33 +52,30 @@ jobs:
     # Download Key 
     # -----------------------------
     - name: Download private key from S3
-      run: aws s3 cp s3://kar-backend-terraform-state-bucket/keys/krishna-ec2-key.pem terraform/id_rsa && chmod 600 terraform/id_rsa
+      run: aws s3 cp s3://kar-backend-terraform-state-bucket/keys/krishna-ec2-key.pem terraform/id_rsa.pem && chmod 600 terraform/id_rsa.pem
 
     # -----------------------------
     # Install Ansible
     # -----------------------------
-#    - name: Install Ansible
-#      run: sudo apt-get update && sudo apt-get install -y ansible
+    - name: Install Ansible
+      run: sudo apt-get update && sudo apt-get install -y ansible
 
     # -----------------------------
     # Prepare Ansible Inventory check
     # -----------------------------
     - name: Debug Inventory
       run: 
-        cat terraform/inventory.ini terraform/id_rsa
+        cat terraform/inventory.ini terraform/id_rsa.pem
   
     - name: Debug Inventory
       run: cat ansible/inventory.ini
-
-    - name: Fix SSH key permissions
-      run: chmod 600 terraform/id_rsa
 
     - name: Show folder tree
       run: |
         sudo apt-get install -y tree
         ls -la
         pwd
-        sudo tree /home/runner/work/nasadmin-project-repo/nasadmin-project-repo
+        sudo tree -ap --dirsfirst /home/runner/work/nasadmin-project-repo/nasadmin-project-repo
 
     - name: Run Ansible Playbook
       env:
