@@ -1,11 +1,11 @@
 # NETWORKS AND SYSTEMS ADMINISTRATION Project Repository
 
-### Contributers 
+### 👥 Team Contributions
 
-**Krishna Rao Seelam** contributed for Over all project planning, exection and documentation.
-**Karthik Gunnam** contributed for the development of terraform code and its related documentation.
-**Yogeshreddy Abbireddy** contributed for the development of Ansible, application code and related documentation.
-**Vidya Sagar** contributed for the development of CICD pipeline and its related documentation.
+* **Krishna Rao Seelam**: Contributed to overall project planning, execution, and documentation.
+* **Karthik Gunnam**: Contributed to the development of Terraform code and its related documentation.
+* **Yogeshreddy Abbireddy**: Contributed to the development of Ansible, application code, and related documentation.
+* **Vidya Sagar**: Contributed to the development of the CI/CD pipeline and its related documentation.
 
 ## Overview
 
