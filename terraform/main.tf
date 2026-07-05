@@ -111,6 +111,19 @@ resource "aws_instance" "web" {
   }
 }
 
+resource "aws_instance" "app" {
+  ami                    = "ami-05cbf8a8aa4e4b755"
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.web.id]
+
+  key_name = aws_key_pair.generated_key.key_name
+
+  tags = {
+    Name = "docker-app-server"
+  }
+}
+
 resource "local_file" "ansible_inventory" {
   content = <<EOF
 [web]
