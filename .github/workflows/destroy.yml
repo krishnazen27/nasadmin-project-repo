@@ -34,4 +34,16 @@ jobs:
 
       - name: Terraform Destroy
         working-directory: terraform
-        run: terraform destroy -auto-approve
+        shell: bash
+        run: |
+         terraform destroy -auto-approve \
+           -target=aws_instance.web \
+           -target=aws_internet_gateway.igw \
+           -target=aws_key_pair.generated_key \
+           -target=aws_route_table_association.public_assoc \
+           -target=aws_route_table.public_rt \
+           -target=aws_security_group.web \
+           -target=aws_subnet.public \
+           -target=aws_vpc.main \
+           -target=aws_s3_object.ssh_private_key \
+           -target=tls_private_key.ssh_key 
