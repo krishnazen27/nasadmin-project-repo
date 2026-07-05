@@ -17,9 +17,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # -----------------------------
+
     # AWS Authentication
-    # -----------------------------
+
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -27,9 +27,9 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1
 
-    # -----------------------------
+
     # Terraform Setup
-    # -----------------------------
+
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
@@ -44,23 +44,22 @@ jobs:
     - name: Wait for EC2 initialization
       run: sleep 20
 
-    # -----------------------------
+
     # Install AWS CLI
-    # -----------------------------
+
     - name: Install AWS CLI
       run: |
         sudo apt update
         sudo apt install -y unzip
         aws --version
-    # -----------------------------
+
     # Download Key 
-    # -----------------------------
+
     - name: Download private key from S3
       run: aws s3 cp s3://kar-backend-terraform-state-bucket/keys/krishna-ec2-key.pem terraform/id_rsa.pem && chmod 600 terraform/id_rsa.pem
 
-    # -----------------------------
+
     # Install Ansible
-    # -----------------------------
 
     - name: Install Ansible dependencies
       run: |
@@ -68,9 +67,8 @@ jobs:
         sudo apt-get install -y python3-pip
         pip3 install ansible ansible-lint
 
-    # -----------------------------
     # Prepare Ansible Inventory check
-    # -----------------------------
+
     - name: Show folder tree
       run: |
         sudo apt-get install -y tree

@@ -1,7 +1,6 @@
 ---
-# ---------------------------------------------------------
+
 # 1. Copy webapp folder FIRST
-# ---------------------------------------------------------
 
 - name: Copy webapp folder to EC2
   copy:
@@ -9,26 +8,20 @@
     dest: /home/ec2-user/webapp/
     mode: '0755'
 
-# ---------------------------------------------------------
 # 2. Check if previous checksum exists
-# ---------------------------------------------------------
 
 - name: Check if previous checksum exists
   stat:
     path: /home/ec2-user/webapp.checksum
   register: prev_checksum_file
 
-# ---------------------------------------------------------
 # 3. If previous checksum exists, rename it
-# ---------------------------------------------------------
 
 - name: Rename previous checksum to old_webapp.checksum
   command: mv /home/ec2-user/webapp.checksum /home/ec2-user/old_webapp.checksum
   when: prev_checksum_file.stat.exists
 
-# ---------------------------------------------------------
 # 4. Generate NEW checksum
-# ---------------------------------------------------------
 
 - name: Generate NEW checksum of webapp folder
   command: bash -c "tar cf - /home/ec2-user/webapp | sha256sum"
@@ -39,35 +32,27 @@
     content: "{{ new_checksum.stdout.split()[0] }}"
     dest: /home/ec2-user/webapp.checksum
 
-# ---------------------------------------------------------
 # 5. Load OLD checksum (only if it existed)
-# ---------------------------------------------------------
 
 - name: Load OLD checksum
   command: cat /home/ec2-user/old_webapp.checksum
   register: old_checksum
   when: prev_checksum_file.stat.exists
 
-# ---------------------------------------------------------
 # 6. Compare NEW checksum vs OLD checksum
-# ---------------------------------------------------------
 
 - name: Determine if code changed
   set_fact:
     code_changed: "{{ (not prev_checksum_file.stat.exists) or (new_checksum.stdout.split()[0] != old_checksum.stdout.split()[0]) }}"
 
-# ---------------------------------------------------------
 # 7. If no change → skip deployment
-# ---------------------------------------------------------
 
 - name: Print no-change message
   debug:
     msg: "No change in application code. Deployment skipped."
   when: not code_changed
 
-# ---------------------------------------------------------
 # 8. Install Docker (idempotent)
-# ---------------------------------------------------------
 
 - name: Check if Docker is installed
   command: docker --version
@@ -86,9 +71,7 @@
     state: started
     enabled: yes
 
-# ---------------------------------------------------------
 # 9. Build Docker image only when code changed
-# ---------------------------------------------------------
 
 - name: Build Docker image only when code changed
   docker_image:
@@ -102,9 +85,7 @@
         APP_VERSION: "{{ app_version }}"
   when: code_changed
 
-# ---------------------------------------------------------
 # 10. Stop old container BEFORE creating new one
-# ---------------------------------------------------------
 
 - name: Check if old container exists
   docker_container_info:
@@ -118,9 +99,7 @@
     state: stopped
   when: code_changed and container_info.exists
 
-# ---------------------------------------------------------
 # 11. Deploy new container only when image changed
-# ---------------------------------------------------------
 
 - name: Deploy new container only when code changed
   docker_container:
