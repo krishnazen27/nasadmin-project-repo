@@ -1,5 +1,9 @@
 resource "aws_s3_bucket" "tf_state_bucket" {
   bucket = "kar-backend-terraform-state-bucket"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_versioning" "versioning" {
